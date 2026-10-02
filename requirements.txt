@@ -1,0 +1,17 @@
+# Core
+torch>=2.1
+transformers>=4.44
+numpy
+pillow
+av
+
+# Judging / API-backed evaluation (optional)
+openai
+google-genai
+
+# Utilities
+psutil
+matplotlib
+
+# Tests
+pytest

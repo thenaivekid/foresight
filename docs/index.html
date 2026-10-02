@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Foresight: Planning Future Perception in Streaming VLMs without Retraining</title>
+<meta name="description" content="Foresight: a training-free dual-stream architecture that lets streaming VLMs anticipate the future and plan their own perception.">
+<meta property="og:title" content="Foresight: Planning Future Perception in Streaming VLMs without Retraining">
+<meta property="og:image" content="static/img/teaser_E.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--fg:#1d1d1f;--muted:#5f6368;--accent:#1f9d55;--accent2:#2563eb;--bg:#fff;--soft:#f5f7f6;--border:#e3e6e8}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,sans-serif;color:var(--fg);background:var(--bg);line-height:1.6}
+.wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+header{padding:64px 0 24px;text-align:center}
+h1{font-size:2.5rem;line-height:1.2;margin:0 0 8px;font-weight:800;letter-spacing:-.02em}
+h1 .name{color:var(--accent)}
+.subtitle{font-size:1.25rem;color:var(--muted);margin:0 0 24px;font-weight:500}
+.authors{font-size:1.05rem;margin:0 auto 8px;max-width:860px}
+.authors span{display:inline-block;margin:2px 10px;white-space:nowrap}
+.authors sup,.affils sup{font-size:.7em}
+.affils{color:var(--muted);font-size:.95rem;max-width:860px;margin:0 auto}
+.affils span{display:inline-block;margin:0 8px}
+.notes{color:var(--muted);font-size:.85rem;margin-top:6px}
+.buttons{margin:26px 0 8px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:999px;background:#1d1d1f;color:#fff;text-decoration:none;font-weight:600;font-size:.95rem;transition:transform .15s,background .15s}
+.btn:hover{transform:translateY(-2px);background:#000}
+.btn.disabled{background:#9aa0a6;cursor:default;pointer-events:none}
+.btn svg{width:18px;height:18px;fill:currentColor}
+section{padding:40px 0;border-top:1px solid var(--border)}
+section:first-of-type{border-top:none}
+h2{font-size:1.75rem;margin:0 0 18px;text-align:center;font-weight:700}
+h3{font-size:1.15rem;margin:28px 0 10px}
+p{margin:0 0 14px}
+.abstract{max-width:820px;margin:0 auto;text-align:justify}
+figure{margin:0 0 12px}
+figure img{width:100%;height:auto;border-radius:10px;display:block}
+figcaption{color:var(--muted);font-size:.92rem;margin-top:10px}
+.highlights{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:24px 0 8px}
+.hl{background:var(--soft);border-radius:14px;padding:20px;text-align:center}
+.hl .num{font-size:2.1rem;font-weight:800;color:var(--accent)}
+.hl .lbl{font-size:.92rem;color:var(--muted)}
+.video-slot{aspect-ratio:16/9;background:linear-gradient(135deg,#eef6f1,#eef2fb);border:2px dashed #c9d3cf;border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:600;font-size:1.1rem}
+.tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
+.tab{border:1px solid var(--border);background:#fff;border-radius:999px;padding:8px 16px;cursor:pointer;font:inherit;font-weight:600;font-size:.92rem}
+.tab.active{background:var(--fg);color:#fff;border-color:var(--fg)}
+.panel{display:none}.panel.active{display:block}
+.chart-box{position:relative;height:420px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px}
+.toggles{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0}
+.toggles label{font-size:.88rem;border:1px solid var(--border);border-radius:999px;padding:4px 12px;cursor:pointer;user-select:none;display:inline-flex;gap:6px;align-items:center}
+.toggles input{accent-color:var(--accent)}
+.hint{text-align:center;color:var(--muted);font-size:.85rem}
+.tbl-wrap{overflow-x:auto;margin-top:14px}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap}
+th{cursor:pointer;background:var(--soft);font-weight:600}
+th:first-child,td:first-child{text-align:left}
+tr.ours td{background:#eaf7ef}
+tr.ours td:first-child{font-weight:700}
+td.best{font-weight:800}td.second{text-decoration:underline}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}h1{font-size:1.8rem}.chart-box{height:340px}}
+pre{background:#f6f8fa;border:1px solid var(--border);border-radius:10px;padding:16px;overflow-x:auto;font-size:.85rem;position:relative}
+.copy{position:absolute;top:8px;right:8px;font:inherit;font-size:.8rem;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:#fff;cursor:pointer}
+.author-link{color:var(--fg);text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:3px}
+.author-link:hover{color:var(--accent)}
+.anim{position:relative;width:100%;border-radius:10px;overflow:hidden}
+.anim img{width:100%;display:block}
+@keyframes fadeIn{to{opacity:1}}
+.ring{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border:3px solid var(--accent);border-radius:50%;opacity:0;pointer-events:none}
+#teaserAnim.play .ring{animation:ping 1.6s ease-out .2s infinite}
+#teaserAnim.play .ring.r2{animation:ping 1.6s ease-out 1s infinite}
+@keyframes ping{0%{transform:scale(.4);opacity:1}100%{transform:scale(1.8);opacity:0}}
+.tag{position:absolute;transform:translate(-50%,85%);background:var(--accent);color:#fff;font-size:.8rem;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap;opacity:0;pointer-events:none}
+#teaserAnim.play .tag{animation:fadeIn .6s ease-out 1s forwards}
+@media(prefers-reduced-motion:reduce){.ring{display:none}.tag{opacity:1}}
+.replay{position:absolute;right:10px;bottom:10px;font:inherit;font-size:.8rem;font-weight:600;padding:5px 12px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.92);cursor:pointer}
+#archAnim svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.stage{position:absolute;left:2%;top:3%;background:rgba(29,29,31,.88);color:#fff;font-size:.85rem;font-weight:600;padding:6px 14px;border-radius:999px;transition:opacity .3s}
+#streamAnim{padding-bottom:44px}
+#streamAnim .dim{position:absolute;top:0;bottom:44px;right:0;background:rgba(255,255,255,.62);pointer-events:none}
+#streamAnim .playhead{position:absolute;top:4%;bottom:calc(44px + 10%);width:3px;margin-left:-1.5px;background:#1f9d55;box-shadow:0 0 10px #1f9d55;pointer-events:none}
+#streamAnim .s-cap{position:absolute;bottom:8px;transform:translateX(-50%);background:rgba(29,29,31,.9);color:#fff;font-size:.82rem;font-weight:600;padding:5px 12px;border-radius:999px;white-space:nowrap;pointer-events:none}
+#streamAnim .s-cap.goal{background:#e53935}
+#streamAnim .s-cap.ans{background:#2563eb}
+#streamAnim .replay{bottom:6px}
+footer{padding:30px 0 50px;text-align:center;color:var(--muted);font-size:.85rem;border-top:1px solid var(--border)}
+footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <h1><span class="name">Foresight</span>: Planning Future Perception in Streaming VLMs without Retraining</h1>
+  <div class="authors">
+    <span><a class="author-link" href="https://scholar.google.com/citations?user=q5bgiW0AAAAJ&hl=en" target="_blank" rel="noopener">Ashok Prasad Neupane</a><sup>1,*,&dagger;</sup></span>
+    <span>Dipan Bartaula<sup>2,*</sup></span>
+    <span>Ankit Belbase<sup>1</sup></span>
+    <span>Saugat Adhikari<sup>1</sup></span>
+    <span>Samip Ghimire<sup>1</sup></span>
+    <span>Saroj Poudel<sup>1</sup></span>
+    <span>Binod Bhattarai<sup>2,3,4</sup></span>
+    <span>Danda Pani Paudel<sup>2,5</sup></span>
+  </div>
+  <div class="affils">
+    <span><sup>1</sup>Independent Researcher</span>
+    <span><sup>2</sup>NAAMII, Nepal</span>
+    <span><sup>3</sup>University College London, UK</span>
+    <span><sup>4</sup>University of Aberdeen, UK</span>
+    <span><sup>5</sup>INSAIT, Sofia University &ldquo;St. Kliment Ohridski&rdquo;, Bulgaria</span>
+  </div>
+  <div class="notes"><sup>*</sup>Equal contribution &nbsp;&nbsp; <sup>&dagger;</sup>Corresponding author: neupane.ashok.9696@gmail.com</div>
+
+  <div class="buttons">
+    <a class="btn" href="static/pdf/foresight.pdf" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm-1 7V3.5L18.5 9z"/></svg>Paper</a>
+    <a class="btn" href="https://github.com/thenaivekid/foresight" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.7 1.7.3 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z"/></svg>Code</a>
+    <a class="btn disabled" href="#">
+      <svg viewBox="0 0 24 24"><path d="M4 4h16v2H4zm0 7h16v2H4zm0 7h10v2H4z"/></svg>arXiv (coming soon)</a>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section>
+  <figure>
+    <div class="anim" id="teaserAnim">
+      <img src="static/img/teaser_E.png" alt="Foresight teaser">
+      <span class="ring" style="left:40.8%;top:14.6%"></span>
+      <span class="ring r2" style="left:73.6%;top:10.6%"></span>
+      <span class="tag" style="left:73.6%;top:10.6%">23.0 joint F1</span>
+    </div>
+    <figcaption><b>Foresight shifts streaming VLMs from reactive to proactive inference.</b> Left: existing methods often require additional training, where the proactive and asynchronous nature are vital for human-AI interactivity. Right: Foresight performs better than training based methods while being proactive, asynchronous, and superior to real time inference on the challenging OmniPro benchmark.</figcaption>
+  </figure>
+  <div class="highlights">
+    <div class="hl"><div class="num">23.0</div><div class="lbl">mean joint F1 on OmniPro Online, best overall, training-free</div></div>
+    <div class="hl"><div class="num">+6.7</div><div class="lbl">over the Qwen3-VL-8B backbone on StreamingBench</div></div>
+    <div class="hl"><div class="num">+15.4</div><div class="lbl">over the backbone on OVO-Bench</div></div>
+    <div class="hl"><div class="num">0</div><div class="lbl">training steps: frozen backbone</div></div>
+  </div>
+</section>
+
+<section>
+  <h2>Abstract</h2>
+  <div class="abstract">
+    <p>Existing streaming vision-language models (VLMs) continuously perceive and reason over visual streams, but their computational pathways remain fixed throughout inference. Consequently, they cannot adapt computation to evolving scene dynamics, where different future events demand different levels and forms of perception. We show that streaming VLMs inherently possess the ability to anticipate the immediate future, and leverage this capability to dynamically configure future computation in a training-free manner. Realizing such anticipatory computation, however, is very challenging: future anticipation must be sufficiently reliable to guide computation, planning must run concurrently with streaming inference, and online reconfiguration must incur negligible overhead.</p>
+    <p>To address these challenges, we introduce <b>Foresight</b>, a dual-stream architecture comprising two Siamese LLMs with shared weights, input encoders, and KV cache. The first LLM continuously processes incoming tokens, while the second runs ahead of the stream to anticipate future context, plan future computation, and generate task responses without interrupting streaming inference. Each plan decides when to reason next, what to check then, and how densely to sample, keeping transient evidence separate from persistent control. The resulting computation plan is executed online through an efficient reconfiguration protocol with schema-guided decoding and lightweight diff-based updates, enabling dynamic adaptation with low overhead. With a frozen Qwen3-VL-8B backbone, Foresight achieves 23.0 mean joint F1 on OmniPro Online evaluation beating strongest trained baseline by 9.5%, while improving the backbone by 6.7 on StreamingBench and 15.4 on OVO-Bench, with the largest gain of 18.7 when evidence arrives later in the video stream.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Method</h2>
+  <figure>
+    <div class="anim" id="archAnim">
+      <img class="base show" src="static/img/foresight_archi.png" alt="Foresight architecture">
+      <svg viewBox="0 0 1761 850" preserveAspectRatio="none">
+        <defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter></defs>
+        <g id="boxes"></g><g id="paths"></g><g id="dots"></g>
+      </svg>
+      <div class="stage" id="archStage"></div>
+      <button class="replay" id="archToggle" aria-label="Pause animation">&#10073;&#10073; Pause</button>
+    </div>
+    <figcaption><b>Foresight overview.</b> One frozen VLM runs as two twins over a shared KV cache C<sub>t</sub>. The <i>Ingest LLM</i> (perception) appends every frame admitted by the Vision Gate to C<sub>t</sub> and never stops. When a check is due, the <i>Think LLM</i> (planning) reads a snapshot of C<sub>t</sub> and writes a plan &pi;<sub>t</sub> = (s<sub>t</sub>, u<sub>t</sub>): an evidence state s<sub>t</sub> and a control update u<sub>t</sub>. The <i>Live Executor</i> applies u<sub>t</sub> along the green control lines and emits the answer once the evidence is sufficient.</figcaption>
+  </figure>
+  <h3>Foresight on one stream</h3>
+  <figure>
+    <div class="anim" id="streamAnim">
+      <img src="static/img/state_update.png" alt="Foresight dynamic behavior on one stream" loading="lazy">
+      <div class="dim"></div>
+      <div class="playhead"></div>
+      <div class="s-cap"></div>
+      <button class="replay" id="streamToggle" aria-label="Pause animation">&#10073;&#10073; Pause</button>
+    </div>
+    <figcaption>Task: &ldquo;Let me know when a player scores a goal.&rdquo; Time runs left to right, and the red line marks the goal. The <i>Ingest</i> never pauses, and the cache grows slowly at 1 fps and faster at 8 fps. The <i>Think</i> LLM wakes only at scheduled checks (green bars), and the interval &Delta; is set by the previous plan. Early plans track only the player and ball. As a shot develops, a plan raises sampling to 8 fps and adds the goalkeeper and net; later plans compact the cache (thus KV-cache drops). Just after the goal, the evidence is sufficient and the answer is emitted; the plan then drops the goalkeeper and net, and sampling returns to 1 fps.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>Results</h2>
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-p="omni">OmniPro Online</button>
+    <button class="tab" data-p="sb">StreamingBench</button>
+    <button class="tab" data-p="ovo">OVO-Bench</button>
+  </div>
+
+  <div class="panel active" id="p-omni">
+    <p class="hint">Joint F1 (%) on the OmniPro Online subset that does not need audio. Click methods to show/hide them; hover bars for values.</p>
+    <div class="toggles" id="omni-toggles"></div>
+    <div class="chart-box"><canvas id="omniChart"></canvas></div>
+    <div class="tbl-wrap"><table id="omni-table"></table></div>
+  </div>
+  <div class="panel" id="p-sb">
+    <p class="hint">StreamingBench accuracy (%). Click a column header to sort.</p>
+    <div class="chart-box"><canvas id="sbChart"></canvas></div>
+    <div class="tbl-wrap"><table id="sb-table"></table></div>
+  </div>
+  <div class="panel" id="p-ovo">
+    <p class="hint">OVO-Bench accuracy (%). Click a column header to sort.</p>
+    <div class="chart-box"><canvas id="ovoChart"></canvas></div>
+    <div class="tbl-wrap"><table id="ovo-table"></table></div>
+  </div>
+  <p class="hint" style="margin-top:12px">Numbers are taken from the tables in the paper. See the paper for footnotes and evaluation details.</p>
+</section>
+
+<section>
+  <h2>Ablations</h2>
+  <p class="hint">Controller and input-processing ablations on OmniPro Online (%). Plan-field rows remove the named control while keeping everything else fixed. The input-processing row replaces two-frame clips with individual-frame inputs.</p>
+  <div class="tbl-wrap"><table id="abl-table">
+    <tr><th>Component</th><th>Ablation</th><th>Time F1</th><th>Joint F1</th></tr>
+    <tr class="ours"><td colspan="2">Full Foresight (as reported)</td><td>43.7</td><td>23.0</td></tr>
+    <tr><td>Think LLM</td><td>Next Check</td><td>43.0</td><td>18.9</td></tr>
+    <tr><td>Think LLM</td><td>Next Question</td><td>43.3</td><td>19.4</td></tr>
+    <tr><td>Think LLM</td><td>Next Check + Next Question</td><td>43.2</td><td>18.6</td></tr>
+    <tr><td>Vision Gate</td><td>FPS</td><td>43.5</td><td>23.0</td></tr>
+    <tr><td>Vision Encoder</td><td>Keep Classes</td><td>42.7</td><td>22.7</td></tr>
+    <tr><td>Vision Encoder</td><td>Ignore Classes</td><td>43.5</td><td>22.9</td></tr>
+    <tr><td>KV Cache</td><td>Compact Now</td><td>44.3</td><td>23.4</td></tr>
+    <tr><td>Live Executor</td><td>all fields (plan ignored)</td><td>4.7</td><td>0.7</td></tr>
+    <tr><td>User Response</td><td>all but Answer</td><td>4.0</td><td>0.3</td></tr>
+    <tr><td>Input Processing</td><td>Individual frames (no two-frame clips)</td><td>40.1</td><td>19.3</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>Analysis</h2>
+  <div class="grid2">
+    <figure><img src="static/img/LLM_Anticipation.png" alt="Anticipation quality against lead time" loading="lazy">
+      <figcaption><b>Anticipation quality against lead time.</b></figcaption></figure>
+    <figure><img src="static/img/operating_point_1.png" alt="Operating point analysis" loading="lazy">
+      <figcaption><b>Operating-point analysis.</b></figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>BibTeX</h2>
+<pre id="bib"><button class="copy" onclick="navigator.clipboard.writeText(document.getElementById('bibtxt').innerText);this.innerText='Copied'">Copy</button><code id="bibtxt">@article{neupane2026foresight,
+  title   = {Foresight: Planning Future Perception in Streaming VLMs without Retraining},
+  author  = {Neupane, Ashok Prasad and Bartaula, Dipan and Belbase, Ankit and Adhikari, Saugat and
+             Ghimire, Samip and Poudel, Saroj and Bhattarai, Binod and Paudel, Danda Pani},
+  journal = {Preprint},
+  year    = {2026}
+}</code></pre>
+</section>
+
+</main>
+
+<footer>
+  Page template inspired by <a href="https://nerfies.github.io" target="_blank">Nerfies</a>.
+</footer>
+
+<script>
+const GREEN='#1f9d55';
+const PALETTE=['#9aa0a6','#2563eb','#f59e0b','#a855f7','#ef4444','#0ea5e9','#64748b','#d946ef','#14b8a6','#f97316','#84cc16','#6366f1','#e11d48'];
+
+const OMNI={cols:['Event-Alert','Target-Ground','State-Monitor','Snap.-Count','Cond.-Alert','Cum.-Count','Event-Narr.','Dedup.-Count','Step-Inst.','Mean'],
+ groups:'Perception: Event-Alert … Snap.-Count · Comprehension: Cond.-Alert … Event-Narr. · Reasoning: Dedup.-Count, Step-Inst.',
+ rows:[
+ ['LiveStar','8B',[9.7,0.8,0.0,0.0,14.7,0.0,1.6,0.0,6.0,3.6]],
+ ['MMDuet2','3B',[12.5,5.3,14.9,11.2,21.4,5.3,3.7,12.7,14.7,11.3]],
+ ['MiniCPM-o 4.5','9B',[50.1,12.6,9.8,8.0,23.8,9.0,3.0,3.8,1.4,13.5]],
+ ['Dispider†','7B',[2.3,0.0,0.0,0.0,8.5,0.3,4.5,0.1,9.7,2.8]],
+ ['StreamAgent','8B',[6.8,1.4,4.0,1.9,11.3,0.9,3.7,8.1,7.1,5.0]],
+ ['QueryStream','8B',[8.2,1.4,3.1,1.0,17.6,6.6,7.2,7.1,8.3,6.7]],
+ ['Foresight','8B',[44.7,17.9,16.4,19.1,33.8,16.3,11.5,29.2,18.5,23.0]]]};
+
+const SB={cols:['RTVU','Omni-Source','Contextual','Overall'],extra:'FPS',rows:[
+ ['VideoLLM-Online','2',[35.99,28.45,26.55,32.48]],
+ ['Flash-VStream','1',[23.23,26.00,24.12,24.04]],
+ ['Dispider','1',[67.63,35.66,33.61,53.12]],
+ ['TimeChat-Online‡','1',[75.36,36.96,35.63,58.11]],
+ ['StreamAgent','1',[74.28,36.26,34.62,57.02]],
+ ['Qwen3-VL-8B-Instruct*','–',[74.10,41.90,39.80,59.30]],
+ ['StreamBridge, LLaVA-OV','1',[68.39,26.60,31.74,50.96]],
+ ['StreamBridge, LLaVA-OV + Stream-IT','1',[70.92,26.30,29.21,51.73]],
+ ['StreamBridge, Qwen2-VL','1',[72.01,31.30,36.57,55.09]],
+ ['StreamBridge, Qwen2-VL + Stream-IT','1',[77.04,24.10,32.55,55.39]],
+ ['StreamForest‡','1',[77.14,38.05,36.34,60.80]],
+ ['MiniCPM-o 4.5','–',[78.20,42.10,44.50,62.70]],
+ ['Foresight','adaptive',[79.30,48.70,43.80,66.00]]]};
+
+const OVO={cols:['Real-Time','Backward','Forward','Overall'],extra:'Frames',rows:[
+ ['Human','native',[93.20,92.30,92.90,92.80]],
+ ['Flash-VStream','1 fps',[28.37,27.38,45.09,33.61]],
+ ['Dispider','1 fps',[54.55,36.06,34.72,41.78]],
+ ['TimeChat-Online','1 fps',[58.60,42.00,36.40,45.60]],
+ ['StreamForest','1 fps',[61.20,52.02,53.49,55.57]],
+ ['QueryStream','–',[61.40,42.10,39.03,47.51]],
+ ['StreamAgent','1 fps',[61.30,41.70,45.40,49.40]],
+ ['Qwen3-VL-8B-Instruct*','–',[61.60,41.00,37.70,46.80]],
+ ['MiniCPM-o 4.5','1 fps',[67.30,55.90,55.90,59.70]],
+ ['StreamBridge, Qwen2-VL-7B + Stream-IT','1 fps',[71.30,68.05,48.36,62.57]],
+ ['Foresight','adaptive',[75.02,55.10,56.37,62.16]]]};
+
+const color=(name,i)=>name==='Foresight'?GREEN:PALETTE[i%PALETTE.length];
+
+// ---------- OmniPro grouped bar chart with toggles ----------
+const omniChart=new Chart(document.getElementById('omniChart'),{
+  type:'bar',
+  data:{labels:OMNI.cols,datasets:OMNI.rows.map((r,i)=>({label:`${r[0]} (${r[1]})`,data:r[2],backgroundColor:color(r[0],i),borderRadius:3,hidden:!['MMDuet2','MiniCPM-o 4.5','QueryStream','Foresight'].includes(r[0])}))},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.raw.toFixed(1)}`}}},
+    scales:{y:{beginAtZero:true,title:{display:true,text:'Joint F1 (%)'}}}}
+});
+const tg=document.getElementById('omni-toggles');
+OMNI.rows.forEach((r,i)=>{
+  const l=document.createElement('label');
+  const cb=document.createElement('input');cb.type='checkbox';cb.checked=!omniChart.data.datasets[i].hidden;
+  cb.onchange=()=>{omniChart.setDatasetVisibility(i,cb.checked);omniChart.update();};
+  const dot=document.createElement('span');dot.style.cssText=`width:10px;height:10px;border-radius:50%;background:${color(r[0],i)}`;
+  l.append(cb,dot,document.createTextNode(r[0]));tg.append(l);
+});
+
+// ---------- horizontal "overall" charts ----------
+function overallChart(id,D,ylabel){
+  const rows=[...D.rows].sort((a,b)=>b[2][D.cols.length-1]-a[2][D.cols.length-1]);
+  new Chart(document.getElementById(id),{type:'bar',
+    data:{labels:rows.map(r=>r[0]),datasets:[{label:'Overall',data:rows.map(r=>r[2][D.cols.length-1]),
+      backgroundColor:rows.map(r=>r[0]==='Foresight'?GREEN:(r[0]==='Human'?'#cbd5e1':'#94a3b8')),borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{beginAtZero:true,title:{display:true,text:ylabel}}}}});
+}
+overallChart('sbChart',SB,'Overall accuracy (%)');
+overallChart('ovoChart',OVO,'Overall accuracy (%)');
+
+// ---------- sortable tables with best / second-best marking ----------
+function buildTable(id,D,extra){
+  const t=document.getElementById(id);
+  const head=['Method',extra,...D.cols];
+  let rows=D.rows.map(r=>[r[0],r[1],...r[2]]);
+  const ranked=D.cols.map((_,j)=>{const v=D.rows.filter(r=>r[0]!=='Human').map(r=>r[2][j]);const u=[...new Set(v)].sort((a,b)=>b-a);return [u[0],u[1]];});
+  let sortCol=-1,asc=false;
+  function render(){
+    t.innerHTML='';
+    const tr=document.createElement('tr');
+    head.forEach((h,i)=>{const th=document.createElement('th');th.textContent=h+(i===sortCol?(asc?' ▲':' ▼'):'');
+      th.onclick=()=>{asc=sortCol===i?!asc:(i===0);sortCol=i;rows.sort((a,b)=>{const x=a[i],y=b[i];const c=typeof x==='number'?x-y:String(x).localeCompare(String(y));return asc?c:-c;});render();};tr.append(th);});
+    t.append(tr);
+    rows.forEach(r=>{const row=document.createElement('tr');if(r[0]==='Foresight')row.className='ours';
+      r.forEach((v,i)=>{const td=document.createElement('td');
+        if(typeof v==='number'){td.textContent=v.toFixed(id==='omni-table'?1:2);
+          if(r[0]!=='Human'){const [b,s]=ranked[i-2];if(v===b)td.classList.add('best');else if(v===s)td.classList.add('second');}}
+        else td.textContent=v;row.append(td);});
+      t.append(row);});
+  }
+  render();
+}
+buildTable('omni-table',OMNI,'Params');
+buildTable('sb-table',SB,SB.extra);
+buildTable('ovo-table',OVO,OVO.extra);
+
+
+// ---------- Figure 1: teaser animation ----------
+(function(){
+  const el=document.getElementById('teaserAnim');
+  const play=()=>{el.classList.remove('play');void el.offsetWidth;el.classList.add('play');};
+  new IntersectionObserver((e,o)=>{if(e[0].isIntersecting){play();o.disconnect();}},{threshold:.4}).observe(el);
+})();
+
+// ---------- Figure 2: architecture data/control flow ----------
+(function(){
+  const NS='http://www.w3.org/2000/svg';
+  const DATA='#111', CTRL='#4caf50';
+  const P={ // coordinates in the 1761x850 figure space
+    frames:'M395,302 L575,302',
+    task:'M250,512 L250,655 Q250,668 265,668 L800,668',
+    enc2ing:'M658,365 L658,655 Q658,668 672,668 L800,668',
+    ing2kv:'M862,605 L862,482',
+    kv2think:'M890,448 L890,372',
+    think2plan:'M977,302 L1025,302',
+    plan2exec:'M1107,243 L1107,172',
+    exec2resp:'M1220,172 L1220,668 L1328,668',
+    cGate:'M547,172 L547,270 Q547,286 530,286 L490,286',
+    cEnc:'M655,172 L655,242',
+    cThink:'M882,172 L882,242',
+    cKV:'M772,172 L772,450 Q772,462 790,462 L818,462'
+  };
+  const B={ // highlight boxes [x,y,w,h]
+    gate:[470,218,24,150], enc:[575,245,168,118], kv:[818,442,140,44], ingest:[806,612,166,112],
+    think:[806,245,160,118], plan:[1025,245,172,118], exec:[525,70,715,100], resp:[1355,630,250,80]
+  };
+  // timeline (seconds, 9s loop): [path, start, duration, color]
+  const T=[
+    ['frames',0,1.1,DATA],['task',0,1.6,DATA],
+    ['enc2ing',1.1,1.3,DATA],
+    ['ing2kv',2.4,.7,DATA],
+    ['kv2think',3.1,.7,DATA],
+    ['think2plan',3.8,.6,DATA],
+    ['plan2exec',4.4,.6,DATA],
+    ['cGate',5.0,1.0,CTRL],['cEnc',5.0,.6,CTRL],['cThink',5.0,.6,CTRL],['cKV',5.0,1.1,CTRL],
+    ['exec2resp',6.2,1.4,DATA]
+  ];
+  const H=[['gate',0.7,1.2],['enc',1.0,1.4],['ingest',2.2,1.0],['kv',2.9,1.0],['think',3.6,1.0],['plan',4.3,.8],['exec',4.9,1.3],['gate',5.8,.8],['enc',5.5,.8],['resp',7.4,1.4]];
+  const S=[[0,'1 · Frames pass the Vision Gate and are encoded'],[2.2,'2 · Ingest LLM appends them to the shared KV cache'],[3.1,'3 · Think LLM reads a cache snapshot'],[3.8,'4 · Think LLM writes a plan'],[4.4,'5 · Live Executor applies the plan (control lines)'],[6.2,'6 · Evidence is sufficient: the answer is emitted']];
+  const LOOP=9;
+  const svg=document.querySelector('#archAnim svg');
+  const gB=svg.querySelector('#boxes'),gP=svg.querySelector('#paths'),gD=svg.querySelector('#dots');
+  const paths={};
+  for(const k in P){const p=document.createElementNS(NS,'path');p.setAttribute('d',P[k]);p.setAttribute('fill','none');gP.append(p);paths[k]=p;}
+  const boxes={};
+  for(const k in B){const [x,y,w,h]=B[k];const r=document.createElementNS(NS,'rect');
+    Object.entries({x,y,width:w,height:h,rx:14,fill:'none',stroke:'#1f9d55','stroke-width':5,opacity:0}).forEach(([a,v])=>r.setAttribute(a,v));gB.append(r);boxes[k]=r;}
+  const dots=T.map(([k,,,c])=>{const g=document.createElementNS(NS,'g');
+    const halo=document.createElementNS(NS,'circle');halo.setAttribute('r',14);halo.setAttribute('fill',c===CTRL?'#7ee07f':'#f59e0b');halo.setAttribute('filter','url(#glow)');
+    const d=document.createElementNS(NS,'circle');d.setAttribute('r',8);d.setAttribute('fill',c===CTRL?CTRL:'#f59e0b');d.setAttribute('stroke','#fff');d.setAttribute('stroke-width',2.5);
+    g.append(halo,d);g.style.opacity=0;gD.append(g);return g;});
+  const stage=document.getElementById('archStage');
+  let t0=null,paused=false,pauseAt=0,visible=false;
+  const ease=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+  function frame(ts){
+    if(t0===null)t0=ts;
+    if(!paused&&visible){
+      const t=((ts-t0)/1000)%LOOP;
+      T.forEach(([k,st,du],i)=>{const u=(t-st)/du;const g=dots[i];
+        if(u<0||u>1){g.style.opacity=0;return;}
+        const p=paths[k],L=p.getTotalLength(),pt=p.getPointAtLength(ease(u)*L);
+        g.setAttribute('transform',`translate(${pt.x},${pt.y})`);g.style.opacity=u<.08?u/.08:(u>.92?(1-u)/.08:1);});
+      for(const k in boxes)boxes[k].setAttribute('opacity',0);
+      H.forEach(([k,st,du])=>{const u=(t-st)/du;if(u>=0&&u<=1)boxes[k].setAttribute('opacity',Math.sin(Math.PI*u).toFixed(2));});
+      let label=S[0][1];S.forEach(([st,l])=>{if(t>=st)label=l;});
+      if(stage.textContent!==label)stage.textContent=label;
+    }
+    requestAnimationFrame(frame);
+  }
+  const btn=document.getElementById('archToggle');
+  btn.onclick=()=>{paused=!paused;
+    if(paused){pauseAt=performance.now();btn.innerHTML='&#9654; Play';}
+    else{t0+=performance.now()-pauseAt;btn.innerHTML='&#10073;&#10073; Pause';}};
+  new IntersectionObserver(e=>{visible=e[0].isIntersecting;},{threshold:.2}).observe(document.getElementById('archAnim'));
+  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches)requestAnimationFrame(frame);
+})();
+
+
+// ---------- Figure 3: one stream, playhead over time ----------
+(function(){
+  const el=document.getElementById('streamAnim');
+  const dim=el.querySelector('.dim'),ph=el.querySelector('.playhead'),cap=el.querySelector('.s-cap');
+  const X0=10.5,X1=97,DUR=14,HOLD=2.5; // timeline spans x=10.5%..97% of the figure
+  const EV=[[10.5,'Plan: sample 1 fps, keep player + ball',''],
+    [32.3,'Scheduled check: no change',''],
+    [53.9,'Shot developing: raise to 8 fps, add goalkeeper + net',''],
+    [61.1,'Plan compacts the KV cache',''],
+    [65.2,'Goal!','goal'],
+    [66.9,'Evidence sufficient: answer emitted, drop goalkeeper + net','ans'],
+    [69.5,'Sampling returns to 1 fps',''],
+    [89.8,'Scheduled check: no change','']];
+  let t0=null,paused=false,pauseAt=0,visible=false;
+  function frame(ts){
+    if(t0===null)t0=ts;
+    if(!paused&&visible){
+      const t=((ts-t0)/1000)%(DUR+HOLD);
+      const x=X0+(X1-X0)*Math.min(t/DUR,1);
+      dim.style.left=x+'%';ph.style.left=x+'%';
+      let e=EV[0];EV.forEach(v=>{if(x>=v[0])e=v;});
+      if(cap.textContent!==e[1]){cap.textContent=e[1];cap.className='s-cap '+e[2];}
+      cap.style.left=Math.max(30,Math.min(70,x))+'%';
+    }
+    requestAnimationFrame(frame);
+  }
+  const btn=document.getElementById('streamToggle');
+  btn.onclick=()=>{paused=!paused;
+    if(paused){pauseAt=performance.now();btn.innerHTML='&#9654; Play';}
+    else{t0+=performance.now()-pauseAt;btn.innerHTML='&#10073;&#10073; Pause';}};
+  new IntersectionObserver(e=>{visible=e[0].isIntersecting;},{threshold:.2}).observe(el);
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){dim.remove();ph.remove();cap.remove();}
+  else requestAnimationFrame(frame);
+})();
+
+// ---------- tabs ----------
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');document.getElementById('p-'+b.dataset.p).classList.add('active');
+});
+</script>
+</body>
+</html>

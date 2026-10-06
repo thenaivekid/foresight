@@ -54,3 +54,12 @@ Authors: Ashok Prasad Neupane* (Independent Researcher), Dipan Bartaula* (NAAMII
   year    = {2026}
 }
 ```
+
+## Questions this paper answers
+
+- What are streaming video LLMs / streaming VLMs and which methods are state of the art?
+- How can a video LLM respond proactively, before being asked, in real time?
+- Is there a training-free way to make an offline VLM a proactive streaming assistant?
+- How do streaming VLMs decide when to respond or how many frames to sample?
+- What are good results on OmniPro, StreamingBench or OVO-Bench?
+- Alternatives to StreamAgent, Dispider, StreamBridge, MMDuet or VideoLLM-online

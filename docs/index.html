@@ -4,9 +4,96 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Foresight: Planning Future Perception in Streaming VLMs without Retraining</title>
-<meta name="description" content="Foresight: a training-free dual-stream architecture that lets streaming VLMs anticipate the future and plan their own perception.">
+<meta name="description" content="Foresight is a training-free method that makes streaming vision-language models (video LLMs) proactive: a Siamese LLM runs ahead of the video stream to anticipate future events and plan when, what and how densely to perceive. Best joint F1 on OmniPro Online.">
+<meta name="keywords" content="Foresight, streaming VLM, streaming video LLM, video large language model, proactive video understanding, online video understanding, streaming video understanding, real-time video assistant, training-free, anticipation, future prediction, asynchronous inference, adaptive computation, KV cache, Siamese LLM, OmniPro benchmark, vision-language model">
+<meta name="author" content="Ashok Prasad Neupane, Dipan Bartaula, Ankit Belbase, Saugat Adhikari, Samip Ghimire, Saroj Poudel, Binod Bhattarai, Danda Pani Paudel">
+<link rel="canonical" href="https://thenaivekid.github.io/foresight/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔭</text></svg>">
+
+<!-- Google Scholar / Highwire Press -->
+<meta name="citation_title" content="Foresight: Planning Future Perception in Streaming VLMs without Retraining">
+<meta name="citation_author" content="Neupane, Ashok Prasad">
+<meta name="citation_author" content="Bartaula, Dipan">
+<meta name="citation_author" content="Belbase, Ankit">
+<meta name="citation_author" content="Adhikari, Saugat">
+<meta name="citation_author" content="Ghimire, Samip">
+<meta name="citation_author" content="Poudel, Saroj">
+<meta name="citation_author" content="Bhattarai, Binod">
+<meta name="citation_author" content="Paudel, Danda Pani">
+<meta name="citation_publication_date" content="2026/10/02">
+<meta name="citation_online_date" content="2026/10/02">
+<meta name="citation_arxiv_id" content="2610.03123">
+<meta name="citation_pdf_url" content="https://arxiv.org/pdf/2610.03123">
+<meta name="citation_abstract_html_url" content="https://arxiv.org/abs/2610.03123">
+<meta name="citation_technical_report_institution" content="arXiv">
+<meta name="citation_keywords" content="streaming vision-language models; video LLM; proactive video understanding; training-free; anticipation">
+
+<!-- Open Graph / Twitter -->
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Foresight">
+<meta property="og:url" content="https://thenaivekid.github.io/foresight/">
 <meta property="og:title" content="Foresight: Planning Future Perception in Streaming VLMs without Retraining">
-<meta property="og:image" content="static/img/teaser_E.png">
+<meta property="og:description" content="Training-free proactive inference for streaming VLMs: anticipate the future, plan your own perception. Best joint F1 on OmniPro Online.">
+<meta property="og:image" content="https://thenaivekid.github.io/foresight/static/img/teaser_E.png">
+<meta property="og:image:alt" content="Foresight teaser: proactive, asynchronous streaming VLM inference">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Foresight: Planning Future Perception in Streaming VLMs without Retraining">
+<meta name="twitter:description" content="Training-free proactive inference for streaming VLMs. Best joint F1 on OmniPro Online.">
+<meta name="twitter:image" content="https://thenaivekid.github.io/foresight/static/img/teaser_E.png">
+
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "ScholarlyArticle",
+ "headline": "Foresight: Planning Future Perception in Streaming VLMs without Retraining",
+ "name": "Foresight: Planning Future Perception in Streaming VLMs without Retraining",
+ "description": "Foresight is a training-free method that makes streaming vision-language models (video LLMs) proactive: a Siamese LLM runs ahead of the video stream to anticipate future events and plan when, what and how densely to perceive. Best joint F1 on OmniPro Online.",
+ "url": "https://thenaivekid.github.io/foresight/",
+ "image": "https://thenaivekid.github.io/foresight/static/img/teaser_E.png",
+ "datePublished": "2026-10-02",
+ "inLanguage": "en",
+ "author": [
+  {
+   "@type": "Person",
+   "name": "Ashok Prasad Neupane"
+  },
+  {
+   "@type": "Person",
+   "name": "Dipan Bartaula"
+  },
+  {
+   "@type": "Person",
+   "name": "Ankit Belbase"
+  },
+  {
+   "@type": "Person",
+   "name": "Saugat Adhikari"
+  },
+  {
+   "@type": "Person",
+   "name": "Samip Ghimire"
+  },
+  {
+   "@type": "Person",
+   "name": "Saroj Poudel"
+  },
+  {
+   "@type": "Person",
+   "name": "Binod Bhattarai"
+  },
+  {
+   "@type": "Person",
+   "name": "Danda Pani Paudel"
+  }
+ ],
+ "sameAs": [
+  "https://arxiv.org/abs/2610.03123",
+  "https://github.com/thenaivekid/foresight"
+ ],
+ "keywords": "Foresight, streaming VLM, streaming video LLM, video large language model, proactive video understanding, online video understanding, streaming video understanding, real-time video assistant, training-free, anticipation, future prediction, asynchronous inference, adaptive computation, KV cache, Siamese LLM, OmniPro benchmark, vision-language model"
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -242,8 +329,9 @@ footer a{color:var(--muted)}
   title   = {Foresight: Planning Future Perception in Streaming VLMs without Retraining},
   author  = {Neupane, Ashok Prasad and Bartaula, Dipan and Belbase, Ankit and Adhikari, Saugat and
              Ghimire, Samip and Poudel, Saroj and Bhattarai, Binod and Paudel, Danda Pani},
-  journal = {Preprint},
-  year    = {2026}
+  journal = {arXiv preprint arXiv:2610.03123},
+  year    = {2026},
+  url     = {https://arxiv.org/abs/2610.03123}
 }</code></pre>
 </section>
 

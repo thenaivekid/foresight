@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Foresight: Planning Future Perception in Streaming VLMs without Retraining</title>
-<meta name="description" content="Foresight is a training-free method that makes streaming vision-language models (video LLMs) proactive: a Siamese LLM runs ahead of the video stream to anticipate future events and plan when, what and how densely to perceive. Best joint F1 on OmniPro Online.">
-<meta name="keywords" content="Foresight, streaming VLM, streaming video LLM, video large language model, proactive video understanding, online video understanding, streaming video understanding, real-time video assistant, training-free, anticipation, future prediction, asynchronous inference, adaptive computation, KV cache, Siamese LLM, OmniPro benchmark, vision-language model">
+<meta name="description" content="Foresight: a training-free streaming video LLM (streaming VLM) for proactive, real-time video understanding. Two Siamese copies of one frozen VLM share a KV cache; one watches the stream while the other plans ahead (when to check, what to look for, how many FPS). Best on OmniPro Online, StreamingBench and OVO-Bench forward active responding.">
+<meta name="keywords" content="Foresight, streaming video LLM, streaming VLM, streaming vision-language model, streaming video understanding, proactive video understanding, proactive streaming video, real-time video LLM, online video understanding, online video LLM, real-time video assistant, proactive video question answering, streaming video question answering, training-free video LLM, asynchronous inference, anticipatory computation, adaptive frame sampling, shared KV cache, Qwen3-VL, OmniPro, StreamingBench, OVO-Bench, VideoLLM-online, MMDuet, Dispider, StreamBridge, StreamAgent, LiveStar, StreamMind">
 <meta name="author" content="Ashok Prasad Neupane, Dipan Bartaula, Ankit Belbase, Saugat Adhikari, Samip Ghimire, Saroj Poudel, Binod Bhattarai, Danda Pani Paudel">
 <link rel="canonical" href="https://thenaivekid.github.io/foresight/">
 <meta name="robots" content="index, follow, max-image-preview:large">
@@ -178,6 +178,86 @@ pre{background:#f6f8fa;border:1px solid var(--border);border-radius:10px;padding
 footer{padding:30px 0 50px;text-align:center;color:var(--muted);font-size:.85rem;border-top:1px solid var(--border)}
 footer a{color:var(--muted)}
 </style>
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "FAQPage",
+ "mainEntity": [
+  {
+   "@type": "Question",
+   "name": "What is Foresight?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Foresight is a training-free, dual-stream architecture for streaming video LLMs. Two Siamese copies of one frozen VLM share weights, input encoders and KV cache: one keeps ingesting the video stream, the other runs ahead to anticipate the future and plan perception."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Does Foresight need retraining or fine-tuning?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "No. The Qwen3-VL-8B backbone stays frozen; only response thresholds are calibrated on a 20% split."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "How does a streaming VLM decide when to respond proactively?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "In Foresight each plan decides when to reason next, what question to check then, how densely to sample frames (FPS), which objects to track or ignore, and whether there is enough evidence to answer."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "How does planning avoid blocking perception?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Only the Ingest LLM writes to the shared KV cache; the Think LLM plans from a read-only snapshot, so perception and reasoning run asynchronously."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "How does Foresight perform on OmniPro?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "It reaches 23.0 mean joint F1 on OmniPro Online (no-audio subset), versus 13.5 for MiniCPM-o 4.5, the strongest trained baseline."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "How does it do on StreamingBench and OVO-Bench?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "66.0 overall on StreamingBench (+6.7 over the backbone, best in the paper's table) and +15.4 on OVO-Bench, including +18.7 on Forward Active Responding."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "How is Foresight different from StreamAgent, Dispider or StreamBridge?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Dispider and StreamBridge rely on separately trained decision modules; StreamAgent plans on a fixed schedule. Foresight uses one frozen model with a shared KV cache, and its own plan sets the next check time."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "Can an offline VLM become a proactive streaming assistant without training?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Yes, that is Foresight's claim: streaming VLMs already anticipate the near future, and Foresight turns that into planned, asynchronous computation without any training."
+   }
+  },
+  {
+   "@type": "Question",
+   "name": "What are the limitations?",
+   "acceptedAnswer": {
+    "@type": "Answer",
+    "text": "Results depend on the backbone's anticipation and temporal grounding; after a false trigger it may keep reporting the event; and it is sensitive to prompt wording."
+   }
+  }
+ ]
+}
+</script>
 </head>
 <body>
 
@@ -321,6 +401,30 @@ footer a{color:var(--muted)}
     <figure><img src="static/img/operating_point_1.png" alt="Operating point analysis" loading="lazy">
       <figcaption><b>Operating-point analysis.</b></figcaption></figure>
   </div>
+</section>
+
+<!-- ===================== FAQ ===================== -->
+<section id="faq" class="section">
+  <h2>FAQ: training-free proactive streaming video understanding</h2>
+  <p>Foresight is a <b>streaming video LLM / streaming VLM</b> method for <b>proactive, real-time video understanding</b>. It relates to online video LLMs (VideoLLM-online, MMDuet, Dispider, StreamBridge, StreamAgent, LiveStar, StreamMind, Flash-VStream) and is evaluated on OmniPro, StreamingBench and OVO-Bench.</p>
+  <h3>What is Foresight?</h3>
+  <p>Foresight is a training-free, dual-stream architecture for streaming video LLMs. Two Siamese copies of one frozen VLM share weights, input encoders and KV cache: one keeps ingesting the video stream, the other runs ahead to anticipate the future and plan perception.</p>
+  <h3>Does Foresight need retraining or fine-tuning?</h3>
+  <p>No. The Qwen3-VL-8B backbone stays frozen; only response thresholds are calibrated on a 20% split.</p>
+  <h3>How does a streaming VLM decide when to respond proactively?</h3>
+  <p>In Foresight each plan decides when to reason next, what question to check then, how densely to sample frames (FPS), which objects to track or ignore, and whether there is enough evidence to answer.</p>
+  <h3>How does planning avoid blocking perception?</h3>
+  <p>Only the Ingest LLM writes to the shared KV cache; the Think LLM plans from a read-only snapshot, so perception and reasoning run asynchronously.</p>
+  <h3>How does Foresight perform on OmniPro?</h3>
+  <p>It reaches 23.0 mean joint F1 on OmniPro Online (no-audio subset), versus 13.5 for MiniCPM-o 4.5, the strongest trained baseline.</p>
+  <h3>How does it do on StreamingBench and OVO-Bench?</h3>
+  <p>66.0 overall on StreamingBench (+6.7 over the backbone, best in the paper&#x27;s table) and +15.4 on OVO-Bench, including +18.7 on Forward Active Responding.</p>
+  <h3>How is Foresight different from StreamAgent, Dispider or StreamBridge?</h3>
+  <p>Dispider and StreamBridge rely on separately trained decision modules; StreamAgent plans on a fixed schedule. Foresight uses one frozen model with a shared KV cache, and its own plan sets the next check time.</p>
+  <h3>Can an offline VLM become a proactive streaming assistant without training?</h3>
+  <p>Yes, that is Foresight&#x27;s claim: streaming VLMs already anticipate the near future, and Foresight turns that into planned, asynchronous computation without any training.</p>
+  <h3>What are the limitations?</h3>
+  <p>Results depend on the backbone&#x27;s anticipation and temporal grounding; after a false trigger it may keep reporting the event; and it is sensitive to prompt wording.</p>
 </section>
 
 <section>

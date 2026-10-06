@@ -258,6 +258,7 @@ footer a{color:var(--muted)}
  ]
 }
 </script>
+<link rel="alternate" type="text/markdown" title="LLM-readable summary (llms.txt)" href="llms.txt">
 </head>
 <body>
 
@@ -293,6 +294,23 @@ footer a{color:var(--muted)}
 </header>
 
 <main class="wrap">
+
+<!-- ===================== TLDR ===================== -->
+<section id="tldr" class="section">
+<style>#tldr .kf{max-width:860px;margin:0 auto;text-align:left;background:#f5f7f9;border:1px solid #e3e6e8;border-radius:12px;padding:18px 26px}#tldr .kf p{margin:.2em 0 .6em}#tldr .kf ul{margin:0;padding-left:1.2em}#tldr .kf li{margin:.35em 0}</style>
+  <h2>Key facts</h2>
+  <div class="kf">
+    <p><b>TL;DR:</b> Foresight makes streaming vision-language models (video LLMs) proactive <b>without any training</b>: a second copy of the same frozen model runs ahead of the video stream, predicts what will happen, and plans when to look, what to check and how many frames to sample.</p>
+    <ul>
+      <li><b>Task:</b> proactive, real-time streaming video understanding (streaming VLM / online video LLM).</li>
+      <li><b>Training-free:</b> frozen Qwen3-VL-8B backbone; only response thresholds are calibrated.</li>
+      <li><b>Architecture:</b> two Siamese LLMs sharing weights, encoders and one KV cache; the Ingest LLM writes, the Think LLM plans asynchronously from a snapshot.</li>
+      <li><b>OmniPro Online:</b> 23.0 mean joint F1, best overall (MiniCPM-o 4.5: 13.5).</li>
+      <li><b>StreamingBench:</b> 66.0 overall (+6.7 over backbone). <b>OVO-Bench:</b> +15.4 over backbone, +18.7 on Forward Active Responding.</li>
+      <li><b>Paper:</b> <a href="https://arxiv.org/abs/2610.03123">arXiv:2610.03123</a> &middot; <b>Code:</b> <a href="https://github.com/thenaivekid/foresight">github.com/thenaivekid/foresight</a></li>
+    </ul>
+  </div>
+</section>
 
 <section>
   <figure>

@@ -1,0 +1,56 @@
+# Foresight: Planning Future Perception in Streaming VLMs without Retraining
+
+> Foresight is a training-free method that makes streaming vision-language models (streaming VLMs / streaming video LLMs) proactive and asynchronous. Two Siamese copies of one frozen VLM share weights, input encoders and a KV cache: an Ingest LLM keeps reading the video stream while a Think LLM runs ahead, anticipates what will happen, and plans when to reason next, what to check, and how densely to sample frames. It achieves the best mean joint F1 (23.0) on OmniPro Online without any training.
+
+Authors: Ashok Prasad Neupane* (Independent Researcher), Dipan Bartaula* (NAAMII), Ankit Belbase, Saugat Adhikari, Samip Ghimire, Saroj Poudel (Independent Researchers), Binod Bhattarai (NAAMII; University College London; University of Aberdeen), Danda Pani Paudel (NAAMII; INSAIT, Sofia University). *Equal contribution. Corresponding author: Ashok Prasad Neupane.
+
+## Links
+
+- [Project page](https://thenaivekid.github.io/foresight/): overview, figures, interactive result tables
+- [arXiv abstract](https://arxiv.org/abs/2610.03123): arXiv:2610.03123 (submitted 2 Oct 2026)
+- [Paper PDF](https://arxiv.org/pdf/2610.03123)
+- [Code](https://github.com/thenaivekid/foresight)
+- [Hugging Face paper page](https://huggingface.co/papers/2610.03123)
+
+## Problem
+
+- Existing streaming VLMs (VideoLLM-online, MMDuet/MMDuet2, Dispider, StreamBridge, StreamAgent, LiveStar, StreamMind, Flash-VStream, MiniCPM-o) keep a fixed computation pathway: they cannot adapt how, when and how densely they perceive as the scene evolves.
+- Most proactive streaming methods need extra training (response heads, RL, separate decision models).
+- Foresight shows that a streaming VLM already anticipates the immediate future and uses that, without training, to configure its own future computation.
+
+## Method
+
+1. Dual stream with shared state: the Ingest LLM is the only writer to the shared KV cache; the Think LLM plans from a read-only snapshot, so perception never blocks on reasoning.
+2. Computation plans: each plan sets Next Check (when to reason next), Next Question (what to verify then), FPS (sampling density), objects to keep or ignore, KV-cache compaction, and whether evidence is sufficient to respond.
+3. Efficiency: schema-guided decoding, diff-based plan updates, and logit-based yes/no decisions instead of free text.
+4. Backbone: frozen Qwen3-VL-8B. Only response thresholds are calibrated on a 20% split.
+
+## Key results
+
+- OmniPro Online (no-audio subset): 23.0 mean joint F1, best overall; strongest trained baseline MiniCPM-o 4.5 reaches 13.5.
+- StreamingBench: 66.0 overall, best in the paper's table, +6.7 over the backbone.
+- OVO-Bench: +15.4 over the backbone; largest gain +18.7 on Forward Active Responding.
+- Training-free: no weights are updated.
+
+## Comparison to related methods
+
+- vs StreamAgent: both anticipate; StreamAgent plans on a fixed schedule, Foresight's own plan sets the next check time.
+- vs Dispider / StreamBridge: those use separately trained decision or activation modules; Foresight uses one frozen model with a shared KV cache.
+- vs MMDuet2 / LiveStar / MiniCPM-o 4.5: those are trained for proactive responses; Foresight is training-free and scores higher on OmniPro Online.
+
+## Limitations
+
+- Depends on the backbone's anticipation and temporal grounding.
+- After a false trigger it can keep reporting the event.
+- Sensitive to prompt wording.
+
+## Citation
+
+```bibtex
+@article{neupane2026foresight,
+  title   = {Foresight: Planning Future Perception in Streaming VLMs without Retraining},
+  author  = {Neupane, Ashok Prasad and Bartaula, Dipan and Belbase, Ankit and Adhikari, Saugat and Ghimire, Samip and Poudel, Saroj and Bhattarai, Binod and Paudel, Danda Pani},
+  journal = {arXiv preprint arXiv:2610.03123},
+  year    = {2026}
+}
+```

@@ -1,6 +1,11 @@
-# Foresight: Asynchronous Proactive Streaming Video Understanding
+# Foresight: Planning Future Perception in Streaming VLMs without Retraining
 
-Reference implementation and evaluation harness for anonymous review.
+[![arXiv](https://img.shields.io/badge/arXiv-2610.03123-b31b1b.svg)](https://arxiv.org/abs/2610.03123)
+[![Project Page](https://img.shields.io/badge/Project-Page-1f9d55.svg)](https://thenaivekid.github.io/foresight/)
+
+Official code for **Foresight**, a training-free method that makes streaming vision-language
+models (video LLMs) proactive and asynchronous.
+**Paper:** [arXiv:2610.03123](https://arxiv.org/abs/2610.03123) · **Project page:** https://thenaivekid.github.io/foresight/
 
 The system runs perception, prefill, and reasoning as three concurrent threads over a
 **single** vision-language model and a **single** linear KV cache. The encoder streams and
@@ -102,3 +107,15 @@ the tests require `torch` and, for the pruner tests, a CUDA device.
 - This release covers the vision-only pipeline.
 - `wandb` is imported lazily in `evaluation/utils.py` for optional run logging and is not a
   required dependency.
+
+## Citation
+
+```bibtex
+@article{neupane2026foresight,
+  title   = {Foresight: Planning Future Perception in Streaming VLMs without Retraining},
+  author  = {Neupane, Ashok Prasad and Bartaula, Dipan and Belbase, Ankit and Adhikari, Saugat and
+             Ghimire, Samip and Poudel, Saroj and Bhattarai, Binod and Paudel, Danda Pani},
+  journal = {arXiv preprint arXiv:2610.03123},
+  year    = {2026}
+}
+```
